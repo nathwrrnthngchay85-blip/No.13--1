@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แฟลชการ์ดคำศัพท์จีน HSK</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f5f2; --card:#ffffff; --ink:#22201d; --muted:#8a857e;
+    --line:#e6e3dd; --accent:#c2553f; --ok:#4c8b6b; --no:#c2553f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:'Noto Sans Thai',-apple-system,BlinkMacSystemFont,sans-serif;
+    min-height:100vh; display:flex; flex-direction:column; align-items:center;
+    padding:36px 20px 60px;
+  }
+  header{text-align:center;margin-bottom:22px}
+  h1{font-size:19px;font-weight:600;letter-spacing:.3px}
+  .sub{font-size:13px;color:var(--muted);margin-top:6px}
+
+  .stats{display:flex;gap:18px;font-size:12px;color:var(--muted);letter-spacing:.5px;margin-top:14px}
+  .stats b{font-weight:600}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:99px;margin-right:6px;vertical-align:middle}
+  .dot.g{background:var(--ok)} .dot.r{background:var(--no)}
+
+  .bar{width:100%;max-width:540px;height:3px;background:var(--line);border-radius:99px;margin:20px 0 16px;overflow:hidden}
+  .bar > i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s ease}
+  .counter{font-size:12px;color:var(--muted);letter-spacing:1px;margin-bottom:14px}
+  .mode{font-size:11px;color:var(--accent);letter-spacing:1px;margin-bottom:12px;min-height:14px}
+
+  .scene{width:100%;max-width:540px;height:330px;perspective:1600px;cursor:pointer}
+  .card{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.4,.2,.2,1)}
+  .card.flip{transform:rotateY(180deg)}
+  .face{
+    position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+    background:var(--card);border:1px solid var(--line);border-radius:18px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:34px;text-align:center;
+    box-shadow:0 1px 2px rgba(0,0,0,.03),0 12px 30px rgba(0,0,0,.05);
+  }
+  .face .tag{position:absolute;top:16px;left:20px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+  .badge{position:absolute;top:14px;right:18px;font-size:11px;padding:3px 10px;border-radius:99px;letter-spacing:.5px}
+  .badge.g{background:#eaf3ee;color:var(--ok)}
+  .badge.r{background:#f9ecea;color:var(--no)}
+  .badge.hide{display:none}
+  .pinyin{font-size:40px;font-weight:500;letter-spacing:.5px}
+  .meaning{font-size:18px;font-weight:300;color:#56514b;margin-top:16px;line-height:1.6}
+  .hint{position:absolute;bottom:18px;font-size:11px;color:#c4beb6;letter-spacing:.5px}
+  .back{transform:rotateY(180deg)}
+  .hanzi{font-family:'Noto Serif SC',serif;font-size:76px;font-weight:600;letter-spacing:6px;color:var(--accent)}
+  .back .pin-small{font-size:15px;color:var(--muted);margin-top:18px;letter-spacing:1px}
+
+  .judge{display:flex;gap:10px;margin-top:20px;width:100%;max-width:540px}
+  .judge button{flex:1;padding:14px;font-size:14px;font-weight:500}
+  .btn-ok{border-color:#cfe2d6 !important;color:var(--ok)}
+  .btn-ok:hover{background:#f1f8f4 !important;border-color:var(--ok) !important}
+  .btn-no{border-color:#eed4ce !important;color:var(--no)}
+  .btn-no:hover{background:#fdf2f0 !important;border-color:var(--no) !important}
+
+  .controls{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap;justify-content:center;max-width:560px}
+  button{
+    font-family:inherit;font-size:13px;padding:10px 18px;border-radius:99px;
+    border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:.18s;
+  }
+  button:hover{border-color:#cfc9c0;background:#fbfaf8}
+  button:active{transform:translateY(1px)}
+  button.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+  button.primary:hover{background:#3a362f}
+  button:disabled{opacity:.4;cursor:not-allowed}
+
+  .done{
+    width:100%;max-width:540px;background:#fff;border:1px solid var(--line);border-radius:18px;
+    padding:40px 30px;text-align:center;display:none;
+    box-shadow:0 12px 30px rgba(0,0,0,.05);
+  }
+  .done.show{display:block}
+  .done h2{font-size:20px;font-weight:600;margin-bottom:10px}
+  .done p{font-size:14px;color:var(--muted);line-height:1.9}
+  .done .big{font-size:34px;font-weight:600;color:var(--accent);margin:14px 0}
+
+  @media(max-width:520px){
+    .scene{height:290px}
+    .pinyin{font-size:31px}
+    .hanzi{font-size:56px}
+    .meaning{font-size:16px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>คำศัพท์ภาษาจีน · แฟลชการ์ด</h1>
+  <div class="sub">ด้านหน้า: พินอิน + คำแปล · ด้านหลัง: ตัวอักษรจีน</div>
+  <div class="stats">
+    <span><i class="dot g"></i>จำได้ <b id="sOk">0</b></span>
+    <span><i class="dot r"></i>ยังไม่ได้ <b id="sNo">0</b></span>
+    <span>ยังไม่ตอบ <b id="sNa">36</b></span>
+  </div>
+</header>
+
+<div class="bar"><i id="bar"></i></div>
+<div class="counter" id="counter">1 / 36</div>
+<div class="mode" id="modeLabel"></div>
+
+<div class="scene" id="scene">
+  <div class="card" id="card">
+    <div class="face front">
+      <span class="tag">คำถาม</span>
+      <span class="badge hide" id="badgeF"></span>
+      <div class="pinyin" id="pinyin"></div>
+      <div class="meaning" id="meaning"></div>
+      <div class="hint">คลิกเพื่อดูตัวอักษรจีน</div>
+    </div>
+    <div class="face back">
+      <span class="tag">คำตอบ</span>
+      <span class="badge hide" id="badgeB"></span>
+      <div class="hanzi" id="hanzi"></div>
+      <div class="pin-small" id="pinSmall"></div>
+      <div class="hint">จำได้ = 1 · ยังไม่ได้ = 2</div>
+    </div>
+  </div>
+</div>
+
+<div class="judge">
+  <button class="btn-no" id="markNo">✗ ยังไม่ได้</button>
+  <button class="btn-ok" id="markOk">✓ จำได้</button>
+</div>
+
+<div class="controls">
+  <button id="prev">← ก่อนหน้า</button>
+  <button class="primary" id="flip">พลิกการ์ด</button>
+  <button id="next">ถัดไป →</button>
+  <button id="review">ทวนเฉพาะที่ยังไม่ได้</button>
+  <button id="shuffle">สุ่มลำดับ</button>
+  <button id="reset">เริ่มใหม่ทั้งหมด</button>
+</div>
+
+<div class="done" id="done">
+  <h2>จบรอบแล้ว 🎉</h2>
+  <div class="big" id="doneScore">0 / 36</div>
+  <p id="doneText"></p>
+  <div class="controls" style="margin-top:20px">
+    <button class="primary" id="doneReview">ทวนเฉพาะที่ยังไม่ได้</button>
+    <button id="doneAll">เริ่มใหม่ทั้งหมด</button>
+  </div>
+</div>
+
+<script>
+const DATA = [
+  {h:"丝毫", p:"sīháo", m:"แม้แต่น้อย, เพียงเล็กน้อย"},
+  {h:"压迫", p:"yāpò", m:"กดขี่, บีบคั้น"},
+  {h:"电压", p:"diànyā", m:"แรงดันไฟฟ้า"},
+  {h:"高压", p:"gāoyā", m:"แรงดันสูง, ความดันสูง, แรงกดดัน"},
+  {h:"气压", p:"qìyā", m:"ความกดอากาศ"},
+  {h:"压力", p:"yālì", m:"ความกดดัน, ความเครียด"},
+  {h:"压缩", p:"yāsuō", m:"อัด, บีบอัด"},
+  {h:"压制", p:"yāzhì", m:"ปราบปราม, กดขี่, ยับยั้ง"},
+  {h:"镇压", p:"zhènyā", m:"ปราบปราม, กดขี่ด้วยความรุนแรง"},
+  {h:"至今", p:"zhìjīn", m:"จนถึงตอนนี้, จนบัดนี้"},
+  {h:"至少", p:"zhìshǎo", m:"อย่างน้อย"},
+  {h:"甚至", p:"shènzhì", m:"แม้กระทั่ง, ถึงกับ"},
+  {h:"甚至于", p:"shènzhìyú", m:"แม้กระทั่ง, ถึงกับ"},
+  {h:"以至", p:"yǐzhì", m:"จนกระทั่ง, ถึงขนาดที่"},
+  {h:"至于", p:"zhìyú", m:"ส่วน, สำหรับ, ถึงกับ"},
+  {h:"自始至终", p:"zìshǐzhìzhōng", m:"ตั้งแต่ต้นจนจบ, ตลอดมา"},
+  {h:"竹子", p:"zhúzi", m:"ไม้ไผ่"},
+  {h:"血液", p:"xuèyè", m:"เลือด"},
+  {h:"鲜血", p:"xiānxuè", m:"เลือดสด"},
+  {h:"血管", p:"xuèguǎn", m:"หลอดเลือด, เส้นเลือด"},
+  {h:"血汗", p:"xuèhàn", m:"เลือดและเหงื่อ"},
+  {h:"伞", p:"sǎn", m:"ร่ม"},
+  {h:"斗争", p:"dòuzhēng", m:"ต่อสู้, ดิ้นรน"},
+  {h:"战争", p:"zhànzhēng", m:"สงคราม"},
+  {h:"争论", p:"zhēnglùn", m:"โต้เถียง, ถกเถียง, การโต้เถียง"},
+  {h:"争取", p:"zhēngqǔ", m:"แย่งชิง, ต่อสู้เพื่อ, พยายาม"},
+  {h:"竞争", p:"jìngzhēng", m:"แข่งขัน, การแข่งขัน"},
+  {h:"力争", p:"lìzhēng", m:"พยายามอย่างเต็มที่, มุ่งมั่น"},
+  {h:"争夺", p:"zhēngduó", m:"แย่งชิง, ช่วงชิง"},
+  {h:"并且", p:"bìngqiě", m:"และ, อีกทั้ง"},
+  {h:"严格", p:"yángé", m:"เข้มงวด, เคร่งครัด"},
+  {h:"严肃", p:"yánsù", m:"เคร่งขรึม, จริงจัง"},
+  {h:"严重", p:"yánzhòng", m:"ร้ายแรง, รุนแรง"},
+  {h:"庄严", p:"zhuāngyán", m:"สง่างาม, เคร่งขรึม"},
+  {h:"严禁", p:"yánjìn", m:"ห้ามเด็ดขาด, ห้ามอย่างเคร่งครัด"},
+  {h:"严厉", p:"yánlì", m:"เข้มงวด, รุนแรง"}
+];
+
+const KEY = 'zh-flashcard-status-v1';
+let status = JSON.parse(localStorage.getItem(KEY) || '{}');  // {hanzi: "ok"|"no"}
+let deck = [...DATA], i = 0, reviewMode = false;
+
+const $ = id => document.getElementById(id);
+const card = $('card');
+
+function save(){ localStorage.setItem(KEY, JSON.stringify(status)); }
+
+function updateStats(){
+  let ok=0,no=0;
+  DATA.forEach(d => { if(status[d.h]==='ok') ok++; else if(status[d.h]==='no') no++; });
+  $('sOk').textContent = ok;
+  $('sNo').textContent = no;
+  $('sNa').textContent = DATA.length - ok - no;
+  $('review').disabled = no === 0;
+}
+
+function setBadge(st){
+  [$('badgeF'), $('badgeB')].forEach(b=>{
+    b.className = 'badge' + (st ? (st==='ok'?' g':' r') : ' hide');
+    b.textContent = st==='ok' ? 'จำได้' : (st==='no' ? 'ยังไม่ได้' : '');
+  });
+}
+
+function render(){
+  const wasFlipped = card.classList.contains('flip');
+  card.classList.remove('flip');
+  const paint = () => {
+    const d = deck[i];
+    $('pinyin').textContent  = d.p;
+    $('meaning').textContent = d.m;
+    $('hanzi').textContent   = d.h;
+    $('pinSmall').textContent= d.p;
+    setBadge(status[d.h]);
+  };
+  wasFlipped ? setTimeout(paint, 270) : paint();
+  $('counter').textContent = (i+1) + ' / ' + deck.length;
+  $('bar').style.width = ((i+1)/deck.length*100) + '%';
+  $('modeLabel').textContent = reviewMode ? '· โหมดทวนเฉพาะคำที่ยังไม่ได้ ·' : '';
+  updateStats();
+}
+
+function flip(){ card.classList.toggle('flip'); }
+function next(){ i = (i+1) % deck.length; render(); }
+function prev(){ i = (i-1+deck.length) % deck.length; render(); }
+
+function mark(st){
+  status[deck[i].h] = st;
+  save(); updateStats(); setBadge(st);
+  if(i === deck.length - 1) finish();
+  else setTimeout(next, 180);
+}
+
+function finish(){
+  const no = DATA.filter(d => status[d.h]==='no').length;
+  const ok = DATA.filter(d => status[d.h]==='ok').length;
+  $('doneScore').textContent = ok + ' / ' + DATA.length;
+  $('doneText').textContent = no > 0
+    ? 'ยังมี ' + no + ' คำที่ต้องทวนอีกครั้ง สู้ ๆ นะ!'
+    : 'จำได้ครบทุกคำแล้ว เก่งมาก! 加油！';
+  $('doneReview').disabled = no === 0;
+  $('done').classList.add('show');
+  document.querySelector('.scene').style.display = 'none';
+  document.querySelector('.judge').style.display = 'none';
+  document.querySelector('.controls').style.display = 'none';
+  $('bar').style.width = '100%';
+}
+
+function startDeck(list, isReview){
+  if(!list.length) return;
+  deck = list; i = 0; reviewMode = isReview;
+  $('done').classList.remove('show');
+  document.querySelector('.scene').style.display = '';
+  document.querySelector('.judge').style.display = '';
+  document.querySelector('.controls').style.display = '';
+  render();
+}
+
+function reviewWrong(){
+  const wrong = DATA.filter(d => status[d.h]==='no');
+  if(!wrong.length){ alert('ไม่มีคำที่ทำเครื่องหมาย "ยังไม่ได้" ครับ'); return; }
+  startDeck(wrong, true);
+}
+function resetAll(){
+  status = {}; save();
+  startDeck([...DATA], false);
+}
+
+$('scene').onclick     = flip;
+$('flip').onclick      = e => { e.stopPropagation(); flip(); };
+$('next').onclick      = next;
+$('prev').onclick      = prev;
+$('markOk').onclick    = () => mark('ok');
+$('markNo').onclick    = () => mark('no');
+$('review').onclick    = reviewWrong;
+$('doneReview').onclick= reviewWrong;
+$('doneAll').onclick   = resetAll;
+$('reset').onclick     = resetAll;
+$('shuffle').onclick   = () => {
+  const d = [...deck];
+  for(let k=d.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1)); [d[k],d[j]]=[d[j],d[k]]; }
+  deck = d; i = 0; render();
+};
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'ArrowRight') next();
+  if(e.key === 'ArrowLeft')  prev();
+  if(e.code === 'Space'){ e.preventDefault(); flip(); }
+  if(e.key === '1') mark('ok');
+  if(e.key === '2') mark('no');
+});
+
+render();
+</script>
+</body>
+</html>
